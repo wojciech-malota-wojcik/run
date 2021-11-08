@@ -24,7 +24,7 @@ func init() {
 		if log == nil {
 			return ctx
 		}
-		return logger.WithLogger(ctx, log.Named("."+taskName))
+		return logger.WithLogger(ctx, log.Named(taskName))
 	}
 }
 
