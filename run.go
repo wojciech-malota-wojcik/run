@@ -17,6 +17,9 @@ import (
 
 func init() {
 	parallel.CtxFactory = func(ctx context.Context, taskName string) context.Context {
+		if taskName == "" {
+			return ctx
+		}
 		log := logger.Get(ctx)
 		if log == nil {
 			return ctx
