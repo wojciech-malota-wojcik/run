@@ -6,7 +6,7 @@ replace github.com/ridge/parallel => github.com/wojciech-malota-wojcik/parallel 
 
 require (
 	github.com/ridge/parallel v0.1.1
-	github.com/wojciech-malota-wojcik/ioc v1.3.1-0.20210829092813-3edb43f522c7
+	github.com/wojciech-malota-wojcik/ioc/v2 v2.4.0
 	github.com/wojciech-malota-wojcik/logger v0.1.0
 	go.uber.org/zap v1.19.0
 )
