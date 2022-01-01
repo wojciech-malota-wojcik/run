@@ -9,9 +9,9 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/outofforest/ioc/v2"
+	"github.com/outofforest/logger"
 	"github.com/ridge/parallel"
-	"github.com/wojciech-malota-wojcik/ioc/v2"
-	"github.com/wojciech-malota-wojcik/logger"
 	"go.uber.org/zap"
 )
 
