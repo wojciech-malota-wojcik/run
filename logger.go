@@ -3,7 +3,7 @@ package run
 import (
 	"context"
 
-	"github.com/wojciech-malota-wojcik/logger"
+	"github.com/outofforest/logger"
 	"go.uber.org/zap"
 )
 
