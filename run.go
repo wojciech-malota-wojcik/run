@@ -11,22 +11,9 @@ import (
 
 	"github.com/outofforest/ioc/v2"
 	"github.com/outofforest/logger"
-	"github.com/ridge/parallel"
+	"github.com/outofforest/parallel"
 	"go.uber.org/zap"
 )
-
-func init() {
-	parallel.CtxFactory = func(ctx context.Context, taskName string) context.Context {
-		if taskName == "" {
-			return ctx
-		}
-		log := logger.Get(ctx)
-		if log == nil {
-			return ctx
-		}
-		return logger.WithLogger(ctx, log.Named(taskName))
-	}
-}
 
 // AppRunner is used to run application
 type AppRunner func(appFunc parallel.Task)
