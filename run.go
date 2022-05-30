@@ -2,7 +2,6 @@ package run
 
 import (
 	"context"
-	"errors"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 	"github.com/outofforest/ioc/v2"
 	"github.com/outofforest/logger"
 	"github.com/outofforest/parallel"
+	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 )
