@@ -12,6 +12,7 @@ import (
 	"github.com/outofforest/ioc/v2"
 	"github.com/outofforest/logger"
 	"github.com/outofforest/parallel"
+	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 )
 
@@ -22,11 +23,12 @@ var mu sync.Mutex
 
 // Service runs service app
 func Service(appName string, containerBuilder func(c *ioc.Container), appFunc interface{}) {
+	logger.ConfigureWithCLI(logger.ServiceDefaultConfig)
 	c := ioc.New()
 	if containerBuilder != nil {
 		containerBuilder(c)
 	}
-	c.Call(run(context.Background(), filepath.Base(appName), appFunc, parallel.Fail))
+	c.Call(run(filepath.Base(appName), logger.ServiceDefaultConfig, appFunc, parallel.Fail))
 }
 
 // Tool runs tool app
@@ -35,22 +37,16 @@ func Tool(appName string, containerBuilder func(c *ioc.Container), appFunc inter
 	if containerBuilder != nil {
 		containerBuilder(c)
 	}
-	c.Call(run(context.Background(), filepath.Base(appName), appFunc, parallel.Exit))
+	c.Call(run(filepath.Base(appName), logger.ToolDefaultConfig, appFunc, parallel.Exit))
 }
 
-func run(ctx context.Context, appName string, setupFunc interface{}, exit parallel.OnExit) func(c *ioc.Container) {
+func run(appName string, loggerConfig logger.Config, setupFunc interface{}, exit parallel.OnExit) func(c *ioc.Container) {
 	return func(c *ioc.Container) {
-		exitCode := 0
-		log := logger.Get(newContext())
+		log := logger.New(logger.ConfigureWithCLI(loggerConfig))
 		if appName != "" && appName != "." {
 			log = log.Named(appName)
 		}
-		ctx := logger.WithLogger(ctx, log)
-		defer func() {
-			if exitCode != 0 {
-				os.Exit(exitCode)
-			}
-		}()
+		ctx := logger.WithLogger(context.Background(), log)
 
 		err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 			spawn("", exit, func(ctx context.Context) error {
@@ -80,9 +76,14 @@ func run(ctx context.Context, appName string, setupFunc interface{}, exit parall
 			return nil
 		})
 
-		if err != nil && !errors.Is(err, ctx.Err()) {
+		switch {
+		case err == nil:
+		case errors.Is(err, ctx.Err()):
+		case errors.Is(err, pflag.ErrHelp):
+			os.Exit(2)
+		default:
 			log.Error("Application returned error", zap.Error(err))
-			exitCode = 1
+			os.Exit(1)
 		}
 	}
 }
