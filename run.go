@@ -23,7 +23,6 @@ var mu sync.Mutex
 
 // Service runs service app
 func Service(appName string, containerBuilder func(c *ioc.Container), appFunc interface{}) {
-	logger.ConfigureWithCLI(logger.ServiceDefaultConfig)
 	c := ioc.New()
 	if containerBuilder != nil {
 		containerBuilder(c)
