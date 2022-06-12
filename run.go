@@ -2,6 +2,7 @@ package run
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -81,7 +82,7 @@ func run(appName string, loggerConfig logger.Config, setupFunc interface{}, exit
 		case errors.Is(err, pflag.ErrHelp):
 			os.Exit(2)
 		default:
-			log.Error("Application returned error", zap.Error(err))
+			log.Error(fmt.Sprintf("Application returned error: %s", err), zap.Error(err))
 			os.Exit(1)
 		}
 	}
