@@ -17,9 +17,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// AppRunner is used to run application
-type AppRunner func(appFunc parallel.Task)
-
 var mu sync.Mutex
 
 // Service runs service app
