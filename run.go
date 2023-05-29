@@ -36,23 +36,20 @@ func run(appName string, loggerConfig logger.Config, containerBuilder func(c *io
 	}
 	ctx := logger.WithLogger(context.Background(), log)
 
-	c := ioc.New()
-	c.Singleton(func() context.Context {
-		return ctx
-	})
-	if containerBuilder != nil {
-		containerBuilder(c)
-	}
-
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		spawn("", exit, func(ctx context.Context) error {
 			defer func() {
 				_ = log.Sync()
 			}()
 
+			c := ioc.New()
 			c.Singleton(func() context.Context {
 				return ctx
 			})
+			if containerBuilder != nil {
+				containerBuilder(c)
+			}
+
 			var err error
 			c.Call(setupFunc, &err)
 			return err
