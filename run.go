@@ -2,11 +2,8 @@ package run
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
-	"path/filepath"
-	"sync"
 	"syscall"
 
 	"github.com/outofforest/ioc/v2"
@@ -17,27 +14,17 @@ import (
 	"go.uber.org/zap"
 )
 
-var mu sync.Mutex
-
-// Service runs service app
-func Service(appName string, containerBuilder func(c *ioc.Container), appFunc interface{}) {
-	run(filepath.Base(appName), logger.ServiceDefaultConfig, containerBuilder, appFunc, parallel.Fail)
-}
-
-// Tool runs tool app
-func Tool(appName string, containerBuilder func(c *ioc.Container), appFunc interface{}) {
-	run(filepath.Base(appName), logger.ToolDefaultConfig, containerBuilder, appFunc, parallel.Exit)
-}
-
-func run(appName string, loggerConfig logger.Config, containerBuilder func(c *ioc.Container), setupFunc interface{}, exit parallel.OnExit) {
-	log := logger.New(logger.ConfigureWithCLI(loggerConfig))
+// Run runs the application.
+func Run(appName string, containerBuilder func(c *ioc.Container), appFunc interface{}) {
+	log := logger.New(logger.ConfigureWithCLI(logger.DefaultConfig))
 	if appName != "" && appName != "." {
 		log = log.Named(appName)
 	}
 	ctx := logger.WithLogger(context.Background(), log)
 
+	var exitBySignal bool
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
-		spawn("", exit, func(ctx context.Context) error {
+		spawn("", parallel.Exit, func(ctx context.Context) error {
 			defer func() {
 				_ = log.Sync()
 			}()
@@ -51,7 +38,7 @@ func run(appName string, loggerConfig logger.Config, containerBuilder func(c *io
 			}
 
 			var err error
-			c.Call(setupFunc, &err)
+			c.Call(appFunc, &err)
 			return err
 		})
 		spawn("signals", parallel.Exit, func(ctx context.Context) error {
@@ -60,8 +47,9 @@ func run(appName string, loggerConfig logger.Config, containerBuilder func(c *io
 
 			select {
 			case <-ctx.Done():
-				return ctx.Err()
+				return nil
 			case sig := <-sigs:
+				exitBySignal = true
 				log.Info("Signal received, terminating...", zap.Stringer("signal", sig))
 			}
 			return nil
@@ -71,11 +59,16 @@ func run(appName string, loggerConfig logger.Config, containerBuilder func(c *io
 
 	switch {
 	case err == nil:
-	case errors.Is(err, ctx.Err()):
+	case errors.Is(err, context.Canceled) && exitBySignal:
 	case errors.Is(err, pflag.ErrHelp):
 		os.Exit(2)
 	default:
-		log.Error(fmt.Sprintf("Application returned error: %s", err), zap.Error(err))
+		log.Error("Application returned error", zap.Error(err))
 		os.Exit(1)
 	}
+
+	// This is done intentionally to be able to wrap one app inside another without side effects,
+	// e.g. when a tool starts a service. By calling os.Exit here, when started service quits,
+	// control is not passed back to the tool.
+	os.Exit(0)
 }
