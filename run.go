@@ -72,3 +72,18 @@ func Run(appName string, containerBuilder func(c *ioc.Container), appFunc interf
 	// control is not passed back to the tool.
 	os.Exit(0)
 }
+
+// FlavourFunc represents a flavour function.
+type FlavourFunc func(ctx context.Context, appFunc parallel.Task) error
+
+// WithFlavours runs application with flavours installed.
+func WithFlavours(ctx context.Context, flavours []FlavourFunc, appFunc parallel.Task) error {
+	for _, f := range flavours {
+		currentAppFunc := appFunc
+		appFunc = func(ctx context.Context) error {
+			return f(ctx, currentAppFunc)
+		}
+	}
+
+	return appFunc(ctx)
+}
