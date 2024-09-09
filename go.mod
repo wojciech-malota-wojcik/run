@@ -13,7 +13,6 @@ require (
 )
 
 require (
-	github.com/ridge/must v0.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/text v0.18.0 // indirect
 )
