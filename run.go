@@ -6,12 +6,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/outofforest/ioc/v2"
-	"github.com/outofforest/logger"
-	"github.com/outofforest/parallel"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
+
+	"github.com/outofforest/ioc/v2"
+	"github.com/outofforest/logger"
+	"github.com/outofforest/parallel"
 )
 
 // FlavourFunc represents a flavour function.
