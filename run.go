@@ -30,44 +30,39 @@ func WithFlavours(ctx context.Context, flavours []FlavourFunc, appFunc parallel.
 	return appFunc(ctx)
 }
 
-// Environment configures environment of an application to run.
-type Environment interface {
-	WithContainerBuilder(containerBuilder func(c *ioc.Container)) Environment
-	WithFlavour(flavourFunc FlavourFunc) Environment
-	Run(appName string, appFunc interface{})
-}
-
 // New creates new environment.
 func New() Environment {
-	return &environment{}
+	return Environment{}
 }
 
-var _ Environment = &environment{}
-
-type environment struct {
+// Environment boots up the application.
+type Environment struct {
 	containerBuilder func(c *ioc.Container)
 	flavours         []FlavourFunc
 }
 
 // WithContainerBuilder sets IoC builder.
-func (e *environment) WithContainerBuilder(containerBuilder func(c *ioc.Container)) Environment {
+func (e Environment) WithContainerBuilder(containerBuilder func(c *ioc.Container)) Environment {
 	e.containerBuilder = containerBuilder
 	return e
 }
 
 // WithFlavour adds flavour to the environment.
-func (e *environment) WithFlavour(flavourFunc FlavourFunc) Environment {
+func (e Environment) WithFlavour(flavourFunc FlavourFunc) Environment {
 	e.flavours = append(e.flavours, flavourFunc)
 	return e
 }
 
 // Run runs an application inside configured environment.
-func (e *environment) Run(appName string, appFunc interface{}) {
-	log := logger.New(logger.ConfigureWithCLI(logger.DefaultConfig))
+func (e Environment) Run(ctx context.Context, appName string, appFunc interface{}) {
+	log := logger.Get(ctx)
+	if log == nil {
+		log = logger.New(logger.ConfigureWithCLI(logger.DefaultConfig))
+	}
 	if appName != "" && appName != "." {
 		log = log.Named(appName)
 	}
-	ctx := logger.WithLogger(context.Background(), log)
+	ctx = logger.WithLogger(ctx, log)
 
 	var exitBySignal bool
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
